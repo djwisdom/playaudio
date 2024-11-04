@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Online Audio Player with Clock</title>
+  <style>
+    /* Base styles for a dark theme */
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #121212; /* Dark background */
+      color: #e0e0e0; /* Light gray text for contrast */
+    }
+
+    /* Clock style */
+    #clock {
+      font-family: 'Digital-7', monospace; /* LED-style font */
+      font-size: 35vh; /* Font size based on viewport height */
+      color: #cfcfcf; /* Light gray color for clock */
+      margin-bottom: 20px;
+    }
+
+    /* Date display style */
+    #dateDisplay {
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+      color: #e0e0e0;
+    }
+
+    /* Container for audio controls */
+    .audio-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px; /* Spacing between elements */
+      width: 70%;
+      max-width: 800px;
+    }
+
+    /* Responsive height for audio player, dropdown, and button */
+    #audioPlayer {
+      flex: 1; /* Take remaining space */
+      color-scheme: dark; /* Enforce dark color scheme for the audio player */
+      background-color: #333; /* Dark background for audio controls */
+      color: #e0e0e0; /* Light text for track info */
+      border: 2px solid #444;
+      border-radius: 5px;
+      padding: 5px;
+      height: 4vw; /* Responsive height: half of viewport width */
+      max-height: 100px; /* Cap maximum height for better appearance on large screens */
+    }
+
+    /* Ensure the dropdown and play button match the audio player height */
+    select, button {
+      font-size: 1rem;
+      padding: 8px 12px;
+      color: #e0e0e0; /* Light text color */
+      background-color: #333; /* Dark background for controls */
+      border: none;
+      border-radius: 5px;
+      height: 5vw; /* Match height to audio player */
+      max-height: 100px; /* Cap maximum height */
+    }
+
+    /* Button hover effect */
+    button:hover, select:hover {
+      background-color: #444;
+    }
+
+    /* Hide default audio controls and apply custom dark theme styling */
+    #audioPlayer::-webkit-media-controls-panel {
+      background-color: #333 !important; /* Dark background */
+      color: #e0e0e0 !important; /* Light text color */
+    }
+
+    #audioPlayer::-webkit-media-controls-play-button,
+    #audioPlayer::-webkit-media-controls-volume-slider,
+    #audioPlayer::-webkit-media-controls-timeline,
+    #audioPlayer::-webkit-media-controls-current-time-display,
+    #audioPlayer::-webkit-media-controls-time-remaining-display {
+      filter: invert(1) hue-rotate(180deg) brightness(1.2); /* Light icons for controls */
+    }
+
+    /* Responsive font scaling */
+    @media (max-height: 500px) {
+      #clock {
+        font-size: 15vh; /* Scale down for smaller screens */
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Real-time clock -->
+  <div id="clock">00:00</div>
+
+  <!-- <h1>Online Audio Player</h1> -->
+
+  <!-- Human-readable date display -->
+  <div id="dateDisplay">Loading date...</div>
+
+  <!-- Container for audio controls: dropdown, play button, and audio player -->
+  <div class="audio-controls">
+    <select id="audioSelector"></select>
+    <button onclick="playAudio()">Play</button>
+    <audio id="audioPlayer" controls></audio>
+  </div>
+
+  <!-- JavaScript code -->
+  <script src="script.js"></script>
+</body>
+</html>
