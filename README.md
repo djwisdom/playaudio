@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="screenshot.png" alt="PlayAudio screenshot">
+</p>
+
 # PlayAudio
 
 A minimal, self-contained web application built with vanilla HTML, CSS, and JavaScript. It combines a real-time clock and date display with a multi-source audio player and a real-time graphic equalizer.
