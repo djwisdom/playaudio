@@ -970,7 +970,7 @@ function toggleStatusbar() {
   const statusbar = document.getElementById("statusbar");
   const toggle = statusbar.querySelector(".statusbar-toggle");
   const isCollapsed = statusbar.classList.toggle("collapsed");
-  toggle.textContent = isCollapsed ? "▼" : "▲";
+  toggle.textContent = isCollapsed ? "▲" : "▼";
 }
 
 // Function to update the real-time clock in 12-hour AM/PM format
