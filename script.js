@@ -30,6 +30,7 @@ const particles = [];
 const peakHoldValues = [];
 const gridPeakHoldValues = [];
 let waterfallHistory = [];
+let terrainHistory = [];
 
 const clockEl = document.getElementById("clock");
 const timeoneliner = document.querySelector(".timeoneliner");
@@ -484,7 +485,7 @@ function drawEqualizerTerrain(width, height, dataArray) {
   const cellH = height / rows;
   const now = performance.now() / 1000;
 
-  while (waterfallHistory.length >= rows) waterfallHistory.shift();
+  while (terrainHistory.length >= rows) terrainHistory.shift();
   const frame = [];
   for (let i = 0; i < cols; i++) {
     const idx = Math.floor(i / cols * usableBins);
@@ -492,16 +493,16 @@ function drawEqualizerTerrain(width, height, dataArray) {
     v = Math.max(0.05, v + 0.05 * Math.sin(now * 2 + i * 0.5));
     frame.push(v);
   }
-  waterfallHistory.push(frame);
+  terrainHistory.push(frame);
 
   ctx.lineWidth = 1;
-  for (let row = 0; row < waterfallHistory.length; row++) {
+  for (let row = 0; row < terrainHistory.length; row++) {
     const vScale = 1 - row / rows * 0.7;
     const yBase = height - (row + 1) * cellH;
     ctx.beginPath();
-    for (let col = 0; col < waterfallHistory[row].length; col++) {
+    for (let col = 0; col < terrainHistory[row].length; col++) {
       const x = col * cellW;
-      const y = yBase - waterfallHistory[row][col] * cellH * vScale;
+      const y = yBase - terrainHistory[row][col] * cellH * vScale;
       if (col === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
     }
@@ -730,6 +731,7 @@ function setRenderMode(mode) {
   peakHoldValues.length = 0;
   gridPeakHoldValues.length = 0;
   waterfallHistory = [];
+  terrainHistory = [];
 }
 
 function drawEqualizer() {
@@ -747,9 +749,15 @@ function drawEqualizer() {
       analyser.getByteTimeDomainData(timeDomainData);
     }
 
-    if (currentRenderMode === "waterfall" || currentRenderMode === "terrain") {
-      if (waterfallHistory.length === 0 || waterfallHistory[0].length !== Math.floor(frequencyData.length * 0.7)) {
+    if (currentRenderMode === "waterfall") {
+      if (waterfallHistory.length === 0 || waterfallHistory[0].length !== usableBins) {
         waterfallHistory = [];
+      }
+    }
+
+    if (currentRenderMode === "terrain") {
+      if (terrainHistory.length === 0) {
+        terrainHistory = [];
       }
     }
   }
