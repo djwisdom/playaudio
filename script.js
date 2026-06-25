@@ -174,6 +174,44 @@ function drawEqualizerBars(width, height, dataArray, timeDomainData) {
   }
 }
 
+function drawEqualizerGridBlocks(width, height, dataArray) {
+  const usableBins = dataArray ? Math.floor(dataArray.length * 0.7) : 0;
+  const gap = 6;
+  const rows = 6;
+  const cols = Math.max(4, Math.floor((width + gap) / 24));
+  const blockW = (width - gap * (cols - 1)) / cols;
+  const blockH = (height - gap * (rows - 1)) / rows;
+  const now = performance.now() / 1000;
+
+  for (let col = 0; col < cols; col++) {
+    let value = 0.15 + 0.2 * Math.sin(now * 3 + col * 0.4) + 0.1 * Math.sin(now * 7 + col * 0.8);
+    if (dataArray) {
+      const dataIndex = Math.floor(col / cols * usableBins);
+      const raw = dataArray[dataIndex] / 255;
+      value = Math.max(raw, value);
+    }
+    value = Math.max(0.05, Math.min(1, value));
+
+    const activeRows = Math.max(1, Math.round(value * rows));
+
+    for (let row = 0; row < rows; row++) {
+      const x = col * (blockW + gap);
+      const y = height - (row + 1) * (blockH + gap);
+      const isActive = row < activeRows;
+
+      if (isActive) {
+        const intensity = (row + 1) / rows;
+        const hue = 200 + intensity * 60;
+        ctx.fillStyle = `hsl(${hue}, 75%, ${40 + intensity * 35}%)`;
+      } else {
+        ctx.fillStyle = "rgba(255, 255, 255, 0.06)";
+      }
+
+      ctx.fillRect(x, y, blockW, blockH);
+    }
+  }
+}
+
 function drawEqualizerMirrorBars(width, height, dataArray) {
   const usableBins = dataArray ? Math.floor(dataArray.length * 0.7) : 0;
   const barCount = Math.max(1, Math.floor(width / 14));
@@ -671,6 +709,9 @@ function drawEqualizer() {
   }
 
   switch (currentRenderMode) {
+    case "gridBlocks":
+      drawEqualizerGridBlocks(width, height, frequencyData);
+      break;
     case "gradientBars":
       drawEqualizerGradientBars(width, height, frequencyData);
       break;

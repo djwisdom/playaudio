@@ -221,8 +221,9 @@
       max-height: 120px;
       margin-top: 10px;
       margin-bottom: 20px;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 8px;
+      background: transparent;
+      border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+      border-radius: 0;
       display: block;
       transition: width 0.3s ease;
     }
@@ -240,6 +241,7 @@
       <select id="renderMode" onchange="setRenderMode(this.value)">
         <option value="bars">Bars</option>
         <option value="gradientBars">Gradient Bars</option>
+        <option value="gridBlocks">Grid Blocks</option>
         <option value="mirrorBars">Mirror Bars</option>
         <option value="peakBars">Peak Hold Bars</option>
         <option value="dotMatrix">Dot Matrix</option>
