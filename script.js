@@ -319,55 +319,6 @@ function drawEqualizerRainbowMirrorBars(width, height, dataArray) {
   ctx.restore();
 }
 
-  const threshold = 0.45;
-  if (bassEnergy > threshold && (!bpmPeakHistory.length || now - bpmPeakHistory[bpmPeakHistory.length - 1] > 0.2)) {
-    bpmPeakHistory.push(now);
-    while (bpmPeakHistory.length > 0 && bpmPeakHistory[0] < now - 30) bpmPeakHistory.shift();
-  }
-
-  let bpm = 120;
-  if (bpmPeakHistory.length >= 4) {
-    const intervals = [];
-    for (let i = 1; i < bpmPeakHistory.length; i++) intervals.push(bpmPeakHistory[i] - bpmPeakHistory[i - 1]);
-    intervals.sort((a, b) => a - b);
-    const median = intervals[Math.floor(intervals.length / 2)];
-    bpm = Math.round(60 / median);
-    bpm = Math.max(60, Math.min(200, bpm));
-  }
-
-  const decayRate = bpm / 600;
-  const rainbowPositions = [0, 30, 60, 120, 180, 240, 270, 300];
-
-  for (let i = 0; i < barCount; i++) {
-    let value = 0.12 + 0.2 * Math.sin(now * 3 + i * 0.45) + 0.1 * Math.sin(now * 6.8 + i * 0.7);
-    if (dataArray) {
-      const dataIndex = Math.floor(i / barCount * usableBins);
-      const raw = dataArray[dataIndex] / 255;
-      value = Math.max(raw, value);
-    }
-    value = Math.max(0.05, Math.min(1, value));
-
-    const hue = rainbowPositions[Math.floor((i / barCount) * rainbowPositions.length) % rainbowPositions.length];
-
-    ctx.fillStyle = `hsla(${hue}, 90%, 55%, 0.9)`;
-    const barH = Math.max(2, value * midY * 0.9);
-    const x = i * (barWidth + gap);
-    ctx.fillRect(x, midY - barH, barWidth, barH);
-
-    ctx.fillStyle = `hsla(${hue}, 75%, 38%, 0.7)`;
-    ctx.fillRect(x, midY, barWidth, barH);
-
-    const peakY = midY - barH;
-    const dotR = Math.max(1.5, Math.min(3.5, barWidth * 0.4));
-    ctx.beginPath();
-    ctx.arc(x + barWidth / 2, peakY - dotR - 1, dotR, 0, Math.PI * 2);
-    ctx.fillStyle = `hsla(${hue}, 100%, 75%, 0.95)`;
-    ctx.fill();
-  }
-
-  ctx.restore();
-}
-
 function drawEqualizerMirrorBars(width, height, dataArray) {
   const usableBins = dataArray ? Math.floor(dataArray.length * 0.7) : 0;
   const barCount = Math.max(1, Math.floor(width / 14));
