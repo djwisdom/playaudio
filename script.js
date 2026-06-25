@@ -180,10 +180,8 @@ function drawEqualizerGridBlocks(width, height, dataArray) {
   const gap = 6;
   const rows = 6;
   const cols = Math.max(6, Math.floor((width + gap) / 18));
-  const blockW = (width / 3 - gap * (cols - 1)) / cols;
+  const blockW = (width - gap * (cols - 1)) / cols;
   const blockH = (height - gap * (rows - 1)) / rows;
-  const gridWidth = cols * blockW + (cols - 1) * gap;
-  const offsetX = (width - gridWidth) / 2;
   const now = performance.now() / 1000;
 
   for (let col = 0; col < cols; col++) {
@@ -198,7 +196,7 @@ function drawEqualizerGridBlocks(width, height, dataArray) {
     const activeRows = Math.max(1, Math.round(value * rows));
 
     for (let row = 0; row < rows; row++) {
-      const x = offsetX + col * (blockW + gap);
+      const x = col * (blockW + gap);
       const y = height - (row + 1) * (blockH + gap);
       const isActive = row < activeRows;
 
@@ -220,10 +218,8 @@ function drawEqualizerGridPeakBlocks(width, height, dataArray) {
   const gap = 6;
   const rows = 6;
   const cols = Math.max(6, Math.floor((width + gap) / 18));
-  const blockW = (width / 3 - gap * (cols - 1)) / cols;
+  const blockW = (width - gap * (cols - 1)) / cols;
   const blockH = (height - gap * (rows - 1)) / rows;
-  const gridWidth = cols * blockW + (cols - 1) * gap;
-  const offsetX = (width - gridWidth) / 2;
   const now = performance.now() / 1000;
 
   while (gridPeakHoldValues.length < cols) gridPeakHoldValues.push(0);
@@ -241,7 +237,7 @@ function drawEqualizerGridPeakBlocks(width, height, dataArray) {
     gridPeakHoldValues[col] = Math.max(gridPeakHoldValues[col] - 0.006, activeRows);
 
     for (let row = 0; row < rows; row++) {
-      const x = offsetX + col * (blockW + gap);
+      const x = col * (blockW + gap);
       const y = height - (row + 1) * (blockH + gap);
       const isActive = row < activeRows;
       const isPeak = row === Math.min(rows - 1, Math.floor(gridPeakHoldValues[col]));
