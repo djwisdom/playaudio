@@ -579,40 +579,59 @@ function drawEqualizerWaterfall(width, height, dataArray) {
 }
 
 function drawEqualizerTerrain(width, height, dataArray) {
-  if (!dataArray) return;
-  const usableBins = Math.floor(dataArray.length * 0.7);
-  const cols = Math.max(6, Math.floor(width / 10));
-  const rows = 8;
-  const cellW = width / cols;
-  const cellH = height / rows;
-  const now = performance.now() / 1000;
+   if (!dataArray) return;
+   const usableBins = Math.floor(dataArray.length * 0.7);
+   const cols = Math.max(8, Math.floor(width / 8));
+   const rows = 16;
+   const cellW = width / cols;
+   const cellH = height / rows;
+   const now = performance.now() / 1000;
 
-  while (terrainHistory.length >= rows) terrainHistory.shift();
-  const frame = [];
-  for (let i = 0; i < cols; i++) {
-    const idx = Math.floor(i / cols * usableBins);
-    let v = dataArray[idx] / 255;
-    v = Math.max(0.05, v + 0.05 * Math.sin(now * 2 + i * 0.5));
-    frame.push(v);
-  }
-  terrainHistory.push(frame);
+   while (terrainHistory.length >= rows) terrainHistory.shift();
+   const frame = [];
+   for (let i = 0; i < cols; i++) {
+     const idx = Math.floor(i / cols * usableBins);
+     let v = dataArray[idx] / 255;
+     v = Math.max(0.05, v + 0.05 * Math.sin(now * 2 + i * 0.5));
+     const noise = 0.15 * Math.sin(now * 0.7 + i * 0.3) * Math.cos(now * 0.4 + i * 0.6);
+     const bump = 0.12 * Math.sin(now * 0.3 + i * 0.8) * Math.sin(now * 0.5 + i * 0.4);
+     v = Math.max(0.02, Math.min(0.98, v + noise + bump));
+     frame.push(v);
+   }
+   terrainHistory.push(frame);
 
-  ctx.lineWidth = 1;
-  for (let row = 0; row < terrainHistory.length; row++) {
-    const vScale = 1 - row / rows * 0.7;
-    const yBase = height - (row + 1) * cellH;
-    ctx.beginPath();
-    for (let col = 0; col < terrainHistory[row].length; col++) {
-      const x = col * cellW;
-      const y = yBase - terrainHistory[row][col] * cellH * vScale;
-      if (col === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    }
-    const hue = 200 + (row / rows) * 40;
-    ctx.strokeStyle = `hsla(${hue}, 70%, 55%, ${0.4 + (row / rows) * 0.6})`;
-    ctx.stroke();
-  }
-}
+   ctx.lineWidth = 1.2;
+   for (let row = 0; row < terrainHistory.length; row++) {
+     const vScale = 1 - row / rows * 0.6;
+     const yBase = height - (row + 1) * cellH;
+     ctx.beginPath();
+     for (let col = 0; col < terrainHistory[row].length; col++) {
+       const x = col * cellW;
+       const y = yBase - terrainHistory[row][col] * cellH * vScale;
+       if (col === 0) ctx.moveTo(x, y);
+       else ctx.lineTo(x, y);
+     }
+     const hue = 220 - (row / rows) * 20;
+     const lightness = 30 + (row / rows) * 20;
+     ctx.strokeStyle = `hsla(${hue}, 30%, ${lightness}%, ${0.3 + (row / rows) * 0.7})`;
+     ctx.stroke();
+   }
+
+   ctx.lineWidth = 1;
+   ctx.strokeStyle = "rgba(100, 120, 150, 0.15)";
+   for (let row = 0; row < terrainHistory.length; row++) {
+     const yCrevice = height - (row + 1) * cellH;
+     ctx.beginPath();
+     for (let col = 0; col < terrainHistory[row].length; col++) {
+       const x = col * cellW;
+       const creviceDepth = 0.15 * Math.sin(now * 0.4 + col * 1.2) * Math.cos(now * 0.3 + col * 0.9);
+       const y = yCrevice + creviceDepth * cellH * 0.5;
+       if (col === 0) ctx.moveTo(x, y);
+       else ctx.lineTo(x, y);
+     }
+     ctx.stroke();
+   }
+ }
 
 function drawEqualizerGradientBars(width, height, dataArray) {
   const usableBins = dataArray ? Math.floor(dataArray.length * 0.7) : 0;
