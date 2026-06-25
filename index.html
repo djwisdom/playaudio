@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Online Audio Player with Clock</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%95%8F%3C/text%3E%3C/svg%3E">
   <style>
     /* Base styles for a dark theme */
     body {
@@ -20,9 +20,9 @@
       flex: 1;
       display: flex;
       flex-direction: column;
-      align-items: center;
       justify-content: center;
       overflow: hidden;
+      width: 100%;
     }
 
     /* Clock style */
@@ -66,9 +66,10 @@
       align-items: center;
       justify-content: center;
       min-height: 50vh;
-      margin: 0 5vw;
+      padding: 0 5vw;
       gap: 10px;
-      width: auto;
+      width: 100%;
+      box-sizing: border-box;
     } 
 
     .statusbar {
