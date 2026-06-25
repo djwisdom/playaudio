@@ -225,7 +225,7 @@ function drawEqualizerPeakBars(width, height, dataArray) {
       value = Math.max(raw, value);
     }
     value = Math.max(0.05, Math.min(1, value));
-    peakHoldValues[i] = Math.max(peakHoldValues[i] - 0.004, value);
+    peakHoldValues[i] = Math.max(peakHoldValues[i] - 0.002, value);
 
     const barH = Math.max(2, value * height);
     const x = i * (barWidth + gap);
