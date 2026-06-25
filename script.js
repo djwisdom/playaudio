@@ -563,11 +563,11 @@ function drawEqualizerWaveform(width, height, dataArray) {
     return;
   }
 
-  const maxDots = Math.max(20, Math.floor(width / 8));
+  const maxDots = Math.max(20, Math.floor(width / 12));
   const stride = Math.max(1, Math.floor(dataArray.length / maxDots));
-  const samples = Math.floor(dataArray.length / stride);
+  const samples = Math.min(maxDots, Math.floor(dataArray.length / stride));
   const step = width / samples;
-  const dotRadius = Math.max(1.5, Math.min(2.8, step * 0.4));
+  const dotRadius = Math.max(1.2, Math.min(2, step * 0.3));
 
   ctx.fillStyle = "rgba(180, 220, 255, 0.9)";
   for (let i = 0; i < samples; i++) {
