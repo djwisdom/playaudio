@@ -20,10 +20,12 @@ audioUrls.forEach((url, index) => {
 let audioContext = null;
 let analyser = null;
 let sourceNode = null;
+let captureSourceNode = null;
 let animationId = null;
 let mediaElementSourceCreated = false;
 let currentRenderMode = "bars";
 let captureMuteGain = null;
+let isCaptureMode = false;
 const canvas = document.getElementById("equalizer");
 const ctx = canvas.getContext("2d");
 const particles = [];
@@ -106,27 +108,46 @@ function connectAudioSource() {
   
   if (!audioContext || !analyser) return false;
 
-  if (!mediaElementSourceCreated) {
+  if (captureMuteGain) {
+    try { captureMuteGain.disconnect(); } catch (e) { /* ignore */ }
+    captureMuteGain = null;
+  }
+
+  if (captureSourceNode) {
+    try { captureSourceNode.disconnect(); } catch (e) { /* ignore */ }
+    captureSourceNode = null;
+  }
+
+  if (sourceNode) {
+    try { sourceNode.disconnect(); } catch (e) { /* ignore */ }
+  }
+
+  try { analyser.disconnect(); } catch (e) { /* ignore */ }
+
+  if (!isCaptureMode && !mediaElementSourceCreated) {
     try {
       sourceNode = audioContext.createMediaElementSource(audioPlayer);
       sourceNode.connect(analyser);
-      analyser.connect(audioContext.destination);
       mediaElementSourceCreated = true;
-      return true;
     } catch (e) {
       console.warn("Analyser connection failed:", e.message);
       mediaElementSourceCreated = false;
       sourceNode = null;
       return false;
     }
+  } else if (!isCaptureMode && mediaElementSourceCreated && sourceNode) {
+    sourceNode.connect(analyser);
+  } else if (isCaptureMode && captureSourceNode) {
+    captureSourceNode.connect(analyser);
   }
 
-  try {
-    analyser.connect(audioContext.destination);
-    return true;
-  } catch (e) {
-    return false;
+  if (!isCaptureMode) {
+    try {
+      analyser.connect(audioContext.destination);
+    } catch (e) { /* ignore */ }
   }
+
+  return true;
 }
 
 function getCanvasSize() {
@@ -910,6 +931,12 @@ function playAudio() {
 
   if (!selectedUrl) return;
 
+  isCaptureMode = false;
+  if (sourceNode) {
+    try { sourceNode.disconnect(); } catch (e) { /* ignore */ }
+  }
+  try { analyser.disconnect(); } catch (e) { /* ignore */ }
+
   setupAudioContext();
 
   if (audioContext && audioContext.state === "suspended") {
@@ -966,7 +993,11 @@ async function captureSystemAudio() {
 
     if (sourceNode) {
       try { sourceNode.disconnect(); } catch (e) { /* ignore */ }
-      sourceNode = null;
+    }
+
+    if (captureSourceNode) {
+      try { captureSourceNode.disconnect(); } catch (e) { /* ignore */ }
+      captureSourceNode = null;
     }
 
     if (!analyser) {
@@ -993,8 +1024,9 @@ async function captureSystemAudio() {
 
     externalSource.connect(analyser);
 
-    mediaElementSourceCreated = true;
-    sourceNode = externalSource;
+    mediaElementSourceCreated = false;
+    captureSourceNode = externalSource;
+    isCaptureMode = true;
     captureMuteGain = null;
 
     if (!animationId) {
@@ -1006,13 +1038,14 @@ async function captureSystemAudio() {
     stream.getAudioTracks().forEach(track => {
       track.onended = () => {
         console.log("System audio capture stopped.");
+        isCaptureMode = false;
         if (captureMuteGain) {
           try { captureMuteGain.disconnect(); } catch (e) { /* ignore */ }
           captureMuteGain = null;
         }
-        if (sourceNode) {
-          try { sourceNode.disconnect(); } catch (e) { /* ignore */ }
-          sourceNode = null;
+        if (captureSourceNode) {
+          try { captureSourceNode.disconnect(); } catch (e) { /* ignore */ }
+          captureSourceNode = null;
         }
       };
     });
@@ -1031,6 +1064,12 @@ async function captureSystemAudio() {
 
 function playLocalFile(input) {
   if (!input.files || !input.files[0]) return;
+
+  isCaptureMode = false;
+  if (sourceNode) {
+    try { sourceNode.disconnect(); } catch (e) { /* ignore */ }
+  }
+  try { analyser.disconnect(); } catch (e) { /* ignore */ }
 
   setupAudioContext();
 
