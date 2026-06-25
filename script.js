@@ -556,35 +556,25 @@ function drawEqualizerLine(width, height, dataArray) {
 
 function drawEqualizerWaveform(width, height, dataArray) {
   if (!dataArray || dataArray.length === 0) {
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
-    ctx.lineWidth = 1;
+    ctx.fillStyle = "rgba(255, 255, 255, 0.12)";
     ctx.beginPath();
-    ctx.moveTo(0, height / 2);
-    ctx.lineTo(width, height / 2);
-    ctx.stroke();
+    ctx.arc(width / 2, height / 2, 2, 0, Math.PI * 2);
+    ctx.fill();
     return;
   }
 
-  const sliceWidth = width / dataArray.length;
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = "rgba(180, 220, 255, 0.9)";
-  ctx.beginPath();
-  ctx.moveTo(0, height / 2);
+  const step = width / dataArray.length;
+  const dotRadius = Math.max(2, Math.min(4, width / dataArray.length * 0.6));
 
+  ctx.fillStyle = "rgba(180, 220, 255, 0.9)";
   for (let i = 0; i < dataArray.length; i++) {
     const v = dataArray[i] / 128.0;
     const y = v * height / 2;
-    ctx.lineTo(i * sliceWidth, y);
+    const x = i * step + step / 2;
+    ctx.beginPath();
+    ctx.arc(x, y, dotRadius, 0, Math.PI * 2);
+    ctx.fill();
   }
-
-  ctx.lineTo(width, height / 2);
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.04)";
-  ctx.moveTo(0, height / 2);
-  ctx.lineTo(width, height / 2);
-  ctx.stroke();
 }
 
 function updateParticles(width, height) {
