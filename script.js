@@ -750,7 +750,7 @@ function drawEqualizer() {
     }
 
     if (currentRenderMode === "waterfall") {
-      if (waterfallHistory.length === 0 || waterfallHistory[0].length !== usableBins) {
+      if (waterfallHistory.length === 0 || waterfallHistory[0].length !== Math.floor(frequencyData.length * 0.7)) {
         waterfallHistory = [];
       }
     }
