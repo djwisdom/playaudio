@@ -58,6 +58,11 @@ function measureClockText() {
     const clockWidth = clockEl.getBoundingClientRect().width;
     if (clockWidth > 0) {
       canvas.style.width = `${clockWidth}px`;
+      const audioPlayer = document.getElementById("audioPlayer");
+      if (audioPlayer) {
+        audioPlayer.style.maxWidth = `${clockWidth}px`;
+        audioPlayer.style.width = `${clockWidth}px`;
+      }
     }
   });
 }
