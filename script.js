@@ -49,6 +49,13 @@ function measureClockText() {
   newSize = Math.max(CLOCK_MIN_FONT, Math.min(CLOCK_MAX_FONT, newSize));
 
   clockEl.style.fontSize = `${newSize}px`;
+
+  requestAnimationFrame(() => {
+    const clockWidth = clockEl.getBoundingClientRect().width;
+    if (clockWidth > 0) {
+      canvas.style.width = `${clockWidth}px`;
+    }
+  });
 }
 
 function onResize() {
