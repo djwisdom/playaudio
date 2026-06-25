@@ -291,7 +291,7 @@ function drawEqualizerRainbowMirrorBars(width, height, dataArray) {
     bpm = Math.max(60, Math.min(200, bpm));
   }
 
-  const hueCycleSpeed = bpm * 1.35;
+  const hueCycleSpeed = 22.5 + (bpm - 60) * 0.125;
   const baseHue = (now * hueCycleSpeed) % 360;
 
   ctx.save();
