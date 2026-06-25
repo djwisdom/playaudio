@@ -159,9 +159,17 @@ This ensures the clock:
 
 ## Running the Project
 
+**Do not double-click `index.html` to open it.** Browsers treat `file://` pages as a restricted security origin. Features like tab/window audio capture (`getDisplayMedia`), Web Audio `MediaElementSource` with CORS, and some canvas/audio APIs will fail or throw errors such as:
+
+```
+Unsafe attempt to load URL index.html from frame with URL index.html.
+'file:' URLs are treated as unique security origins.
+```
+
+Always serve the folder over HTTP instead:
+
 1. Clone or open the repository folder.
-2. Serve `index.html` via any static file server (or simply double-click the file to open in a browser).
-3. No build step or dependency installation is required.
+2. Serve it with any static HTTP server (no build step or dependency installation required).
 
 Example with Python:
 ```bash
@@ -179,6 +187,7 @@ npx serve .
 
 ## Known Limitations
 
+- **Do not open `index.html` via `file://`.** The app requires an HTTP server (`http://localhost` or any static host). Opening the file directly from disk will break tab/window audio capture, equalizer visualization for radio/local sources, and trigger cross-origin errors.
 - **Tab/Window audio capture** (`getDisplayMedia`) is limited to Chromium-based browsers. Firefox and Safari do not expose system audio in this API.
 - The **Stereo Field** visualization mode from the original concept was excluded because internet radio streams and `getDisplayMedia` captures are typically mono, making left/right channel splitting meaningless.
 - Some internet radio streams may intermittently change their CORS policy. If `createMediaElementSource` fails, the equalizer falls back to animated simulated bars, and audio still plays through the `<audio>` element's native output.
