@@ -564,7 +564,7 @@ function drawEqualizerWaveform(width, height, dataArray) {
   }
 
   const step = width / dataArray.length;
-  const dotRadius = Math.max(2, Math.min(4, width / dataArray.length * 0.6));
+  const dotRadius = Math.max(1.5, Math.min(3, step * 0.35));
 
   ctx.fillStyle = "rgba(180, 220, 255, 0.9)";
   for (let i = 0; i < dataArray.length; i++) {
