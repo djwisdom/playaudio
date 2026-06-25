@@ -556,19 +556,23 @@ function drawEqualizerLine(width, height, dataArray) {
 
 function drawEqualizerWaveform(width, height, dataArray) {
   if (!dataArray || dataArray.length === 0) {
-    ctx.fillStyle = "rgba(255, 255, 255, 0.12)";
+    ctx.fillStyle = "rgba(255, 255, 255, 0.15)";
     ctx.beginPath();
-    ctx.arc(width / 2, height / 2, 2, 0, Math.PI * 2);
+    ctx.arc(width / 2, height / 2, 2.5, 0, Math.PI * 2);
     ctx.fill();
     return;
   }
 
-  const step = width / dataArray.length;
-  const dotRadius = Math.max(1.5, Math.min(3, step * 0.35));
+  const maxDots = Math.max(20, Math.floor(width / 8));
+  const stride = Math.max(1, Math.floor(dataArray.length / maxDots));
+  const samples = Math.floor(dataArray.length / stride);
+  const step = width / samples;
+  const dotRadius = Math.max(1.5, Math.min(2.8, step * 0.4));
 
   ctx.fillStyle = "rgba(180, 220, 255, 0.9)";
-  for (let i = 0; i < dataArray.length; i++) {
-    const v = dataArray[i] / 128.0;
+  for (let i = 0; i < samples; i++) {
+    const idx = i * stride;
+    const v = dataArray[idx] / 128.0;
     const y = v * height / 2;
     const x = i * step + step / 2;
     ctx.beginPath();
