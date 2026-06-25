@@ -29,6 +29,7 @@ let isCaptureMode = false;
 const canvas = document.getElementById("equalizer");
 const ctx = canvas.getContext("2d");
 const particles = [];
+const fireParticles = [];
 const peakHoldValues = [];
 const gridPeakHoldValues = [];
 let waterfallHistory = [];
@@ -826,9 +827,72 @@ function drawEqualizerParticles(width, height) {
   ctx.globalCompositeOperation = "source-over";
 }
 
+function updateFireParticles(width, height) {
+  const now = performance.now() / 1000;
+
+  let energy = 0.25 + 0.2 * Math.sin(now * 2.0);
+  if (analyser) {
+    const freq = new Uint8Array(analyser.frequencyBinCount);
+    analyser.getByteFrequencyData(freq);
+    let sum = 0;
+    for (let i = 0; i < freq.length; i++) sum += freq[i];
+    energy = Math.max(energy, (sum / freq.length) / 255);
+  }
+  energy = Math.min(energy, 1.0);
+
+  const spawn = Math.floor(4 + energy * 18);
+  for (let i = 0; i < spawn; i++) {
+    fireParticles.push({
+      x: Math.random() * width,
+      y: height + 2,
+      radius: 1.5 + Math.random() * 3 + energy * 5,
+      speedX: (Math.random() - 0.5) * 1.2,
+      speedY: -1.2 - energy * 3 - Math.random() * 2.5,
+      life: 1,
+      decay: 0.006 + Math.random() * 0.014,
+      energy: energy,
+    });
+  }
+
+  for (let i = fireParticles.length - 1; i >= 0; i--) {
+    const p = fireParticles[i];
+    p.x += p.speedX;
+    p.y += p.speedY;
+    p.speedY *= 0.995;
+    p.life -= p.decay;
+    p.radius *= 0.999;
+    if (p.life <= 0 || p.y < -20) {
+      fireParticles.splice(i, 1);
+    }
+  }
+}
+
+function drawEqualizerFire(width, height) {
+  ctx.globalCompositeOperation = "lighter";
+  for (const p of fireParticles) {
+    const t = p.life;
+    const hue = 10 + 35 * t + p.energy * 10;
+    const saturation = 100;
+    const lightness = 25 + 55 * t;
+    const alpha = t * 0.85;
+
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+    ctx.fillStyle = `hsla(${hue}, ${saturation}%, ${lightness}%, ${alpha})`;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.radius * 2.5, 0, Math.PI * 2);
+    ctx.fillStyle = `hsla(${hue}, ${saturation}%, ${Math.min(lightness + 10, 95)}%, ${alpha * 0.25})`;
+    ctx.fill();
+  }
+  ctx.globalCompositeOperation = "source-over";
+}
+
 function setRenderMode(mode) {
   currentRenderMode = mode;
   particles.length = 0;
+  fireParticles.length = 0;
   peakHoldValues.length = 0;
   gridPeakHoldValues.length = 0;
   waterfallHistory = [];
@@ -908,6 +972,10 @@ function drawEqualizer() {
     case "particles":
       updateParticles(width, height);
       drawEqualizerParticles(width, height);
+      break;
+    case "fire":
+      updateFireParticles(width, height);
+      drawEqualizerFire(width, height);
       break;
     case "line":
       drawEqualizerLine(width, height, frequencyData);

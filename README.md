@@ -14,7 +14,7 @@ A minimal, self-contained web application built with vanilla HTML, CSS, and Java
 - **Digital Clock** — 12-hour format with AM/PM, smooth dynamic resizing via JS `ResizeObserver`. Bounded between 48px and 400px. Formula: `clamp(48px, measured-to-fit, 400px)`. Never overflows viewport width; respects left/right margins (`5vw` each side).
 - **AM/PM Indicator** — sits as an inline superscript at the top-right of the clock digits, sized comparably to the date text.
 - **Date Display** — localized, full-length date string updated every minute.
-- **Graphic Equalizer** — 14 selectable real-time visualization modes rendered on `<canvas>` below the clock.
+- **Graphic Equalizer** — 17 selectable real-time visualization modes rendered on `<canvas>` below the clock.
 
 ### Audio Sources (Statusbar — Bottom Panel)
 The statusbar contains all playback controls and supports three audio source modes:
@@ -45,16 +45,19 @@ All modes use the same `AnalyserNode` data source. The rendering function switch
 | `bars` | Classic vertical frequency bars with rounded caps and simulated fallback when no analyser data is present. |
 | `gradientBars` | Vertical bars with a per-bar `LinearGradient` transitioning from bright at the top to dark at the base. |
 | `mirrorBars` | Bars grow both upward and downward from a horizontal center line. Top half is opaque; bottom half is semi-transparent for depth. |
+| `rainbowMirrorBars` | Mirror bars with a time-based ROYGBIV color cycle synced to estimated BPM, with 5-second peak hold and a 4-second gentle color transition. |
 | `peakBars` | Vertical bars plus a slowly-decaying white "cap" marker above each, showing recent peak amplitude. |
 | `dotMatrix` | A grid of circular dots whose radius and opacity map to frequency intensity, resembling an LED matrix. |
 | `line` | Filled area chart with a bright stroked line on top; smooth simulated baseline when no audio is active. |
 | `area` | Filled polygon under a stepped curve, with a stroked upper edge. |
 | `bezier` | Smooth quadratic Bézier curve connecting sampled points, with a soft filled area beneath. |
+| `gridBlocks` | Rectangular grid blocks with 6px gaps, spanning full canvas width. |
+| `gridPeakBlocks` | Grid layout with a slow-decaying peak-hold row per column. |
 
 #### Time-Domain Modes (`getByteTimeDomainData`)
 | Mode | Description |
 |---|---|
-| `waveform` | Classic oscilloscope trace of raw PCM samples centered vertically. |
+| `waveform` | Classic oscilloscope trace of raw PCM samples centered vertically, rendered as individual dots. |
 | `circularWave` | Frequency data mapped to radial distance from center, drawn as a closed circular shape. |
 | `filledBand` | Time-domain waveform with a semi-transparent filled area underneath for a "ribbon" effect. |
 
@@ -64,6 +67,7 @@ All modes use the same `AnalyserNode` data source. The rendering function switch
 | `waterfall` | Scrolling 2D heatmap (spectrogram) where each new frequency frame is appended at the bottom and older rows scroll upward. |
 | `terrain` | Stacked line plots with perspective-like fading — each row represents a time slice, creating a 3D wireframe landscape effect. |
 | `particles` | Particle emitter system driven by aggregate audio energy. Particles spawn from the bottom with velocity and hue influenced by frequency intensity. |
+| `fire` | Fire particle emitter rising from the bottom of the canvas. Spawn rate and upward velocity are driven by audio energy, with colors ranging from yellow-white at the base through orange to red at the fading tips. Uses additive blending for a glowing effect. |
 
 All modes include animated fallback motion when no real analyser data is available (e.g., before Play is clicked), so the equalizer never appears static or broken.
 
@@ -74,7 +78,7 @@ All modes include animated fallback motion when no real analyser data is availab
 | File | Purpose |
 |---|---|
 | `index.html` | Single-page markup, all CSS styles, and DOM structure. |
-| `script.js` | Clock logic, ResizeObserver sizing, `<audio>` playback, `getDisplayMedia` capture, Web Audio graph (`AudioContext`, `AnalyserNode`, `MediaElementSource`, `MediaStreamSource`), 14 rendering functions, and statusbar toggling. |
+| `script.js` | Clock logic, ResizeObserver sizing, `<audio>` playback, `getDisplayMedia` capture, Web Audio graph (`AudioContext`, `AnalyserNode`, `MediaElementSource`, `MediaStreamSource`), 17 rendering functions, and statusbar toggling. |
 | `README.md` | This document. |
 | `.gitignore` | Ignores `node_modules`, `.env`, and other standard artifacts. |
 
@@ -112,6 +116,12 @@ getDisplayMedia stream → MediaStreamSource → AnalyserNode   (no connection t
 ```
 The analyser receives frequency data from the captured stream while the page produces zero output from that path. The original tab's audio plays through the OS mixer independently, avoiding echo or reverb.
 
+### Audio Capture Echo Prevention
+To prevent captured audio from being routed back to the speakers (which would create a feedback loop or "deep well" echo):
+- A dedicated `captureSourceNode` variable is used for tab/window capture, separate from the `sourceNode` used for radio/local playback.
+- The `isCaptureMode` boolean flag prevents the analyser from connecting to `audioContext.destination` during capture.
+- `analyser.disconnect()` is called before establishing any new capture connection, ensuring no stale routing remains from a previous playback mode.
+
 ### Switching Between Sources
 - `crossOrigin = "anonymous"` is set before loading remote streams (required for `MediaElementSource` CORS).
 - `crossOrigin = null` is set before loading local blob URLs (CORS would break blob playback).
@@ -138,7 +148,7 @@ This ensures the clock:
 ### Equalizer Canvas
 - The canvas is sized to `width: 100%` of `.timeoneliner`, so it always matches the clock's horizontal span.
 - `devicePixelRatio` is accounted for to avoid blurriness on HiDPI/Retina displays.
-- All 14 modes share a single `requestAnimationFrame` loop; switching modes resets transient state (particle arrays, peak-hold values, waterfall history) to avoid stale visuals.
+- All 17 modes share a single `requestAnimationFrame` loop; switching modes resets transient state (particle arrays, peak-hold values, waterfall history) to avoid stale visuals.
 
 ---
 
@@ -192,6 +202,7 @@ npx serve .
 - The **Stereo Field** visualization mode from the original concept was excluded because internet radio streams and `getDisplayMedia` captures are typically mono, making left/right channel splitting meaningless.
 - Some internet radio streams may intermittently change their CORS policy. If `createMediaElementSource` fails, the equalizer falls back to animated simulated bars, and audio still plays through the `<audio>` element's native output.
 - The **local file equalizer issue** was resolved by clearing `crossOrigin = null` before loading blob URLs and properly managing the one-time `createMediaElementSource` binding.
+- **Echo/feedback regression** — a previous fix separated `captureSourceNode` from `sourceNode` and guarded the analyser-to-destination connection with `!isCaptureMode`. A subsequent change re-introduced echo by forgetting to disconnect `analyser` from `audioContext.destination` before creating a new capture source. This was corrected by explicitly calling `analyser.disconnect()` in `captureSystemAudio()` before setting up the capture graph.
 
 ---
 
