@@ -1000,6 +1000,8 @@ async function captureSystemAudio() {
       captureSourceNode = null;
     }
 
+    try { analyser.disconnect(); } catch (e) { /* ignore */ }
+
     if (!analyser) {
       analyser = audioContext.createAnalyser();
       analyser.fftSize = 256;
