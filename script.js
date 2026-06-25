@@ -179,8 +179,8 @@ function drawEqualizerGridBlocks(width, height, dataArray) {
   const usableBins = dataArray ? Math.floor(dataArray.length * 0.7) : 0;
   const gap = 6;
   const rows = 6;
-  const cols = Math.max(4, Math.floor((width + gap) / 48));
-  const blockW = (width - gap * (cols - 1)) / cols;
+  const cols = Math.max(6, Math.floor((width + gap) / 18));
+  const blockW = (width / 3 - gap * (cols - 1)) / cols;
   const blockH = (height - gap * (rows - 1)) / rows;
   const gridWidth = cols * blockW + (cols - 1) * gap;
   const offsetX = (width - gridWidth) / 2;
@@ -219,8 +219,8 @@ function drawEqualizerGridPeakBlocks(width, height, dataArray) {
   const usableBins = dataArray ? Math.floor(dataArray.length * 0.7) : 0;
   const gap = 6;
   const rows = 6;
-  const cols = Math.max(4, Math.floor((width + gap) / 48));
-  const blockW = (width - gap * (cols - 1)) / cols;
+  const cols = Math.max(6, Math.floor((width + gap) / 18));
+  const blockW = (width / 3 - gap * (cols - 1)) / cols;
   const blockH = (height - gap * (rows - 1)) / rows;
   const gridWidth = cols * blockW + (cols - 1) * gap;
   const offsetX = (width - gridWidth) / 2;
