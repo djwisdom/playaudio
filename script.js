@@ -291,8 +291,22 @@ function drawEqualizerRainbowMirrorBars(width, height, dataArray) {
     bpm = Math.max(60, Math.min(200, bpm));
   }
 
-  const hueCycleSpeed = 22.5 + (bpm - 60) * 0.125;
-  const baseHue = (now * hueCycleSpeed) % 360;
+  const palette = [0, 30, 60, 120, 200, 240, 270, 300, 360];
+  const holdSeconds = 5;
+  const fadeSeconds = 4;
+  const step = holdSeconds + fadeSeconds;
+  const totalCycle = palette.length * step;
+  const phase = (now * 1.0) % totalCycle;
+  const idx = Math.floor(phase / step) % palette.length;
+  const localT = phase - idx * step;
+  const nextIdx = (idx + 1) % palette.length;
+  let baseHue;
+  if (localT < holdSeconds) {
+    baseHue = palette[idx];
+  } else {
+    const t = (localT - holdSeconds) / fadeSeconds;
+    baseHue = palette[idx] + (palette[nextIdx] - palette[idx]) * t;
+  }
 
   ctx.save();
   ctx.globalAlpha = 0.9;
