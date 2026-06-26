@@ -1134,19 +1134,119 @@ function drawRibbons(width, height, dataArray) {
   ctx.globalCompositeOperation = "source-over";
 }
 
+let vectors = [];
+const VECTOR_SEGMENTS = 80;
+
+function updateVectors(width, height, dataArray) {
+  const now = performance.now() / 1000;
+  
+  let energy = 0;
+  let bass = 0;
+  if (dataArray) {
+    const len = dataArray.length;
+    for (let i = 0; i < Math.min(8, len); i++) bass += dataArray[i] / 255;
+    for (let i = 0; i < len; i++) energy += dataArray[i] / 255;
+    bass /= Math.min(8, len);
+    energy /= len;
+  }
+  
+  while (vectors.length < VECTOR_SEGMENTS) {
+    vectors.push({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      vx: (Math.random() - 0.5) * 60,
+      vy: (Math.random() - 0.5) * 60,
+      len: 25 + Math.random() * 45,
+      hue: 200 + Math.random() * 80,
+      phase: Math.random() * Math.PI * 2
+    });
+  }
+  
+  for (const v of vectors) {
+    v.x += v.vx * (0.5 + energy * 2);
+    v.y += v.vy * (0.5 + energy * 2);
+    
+    const speed = Math.sqrt(v.vx * v.vx + v.vy * v.vy);
+    const baseSpeed = 40 + speed * 20;
+    
+    v.x += Math.sin(now * 2 + v.phase) * 20 + bass * 50;
+    v.y += Math.cos(now * 1.5 + v.phase) * 15 + bass * 60;
+    
+    v.vx += (Math.random() - 0.5) * 15 * (0.5 + bass);
+    v.vy += (Math.random() - 0.5) * 15 * (0.5 + bass);
+    
+    const speedLimit = 120;
+    const currentSpeed = Math.sqrt(v.vx * v.vx + v.vy * v.vy);
+    if (currentSpeed > speedLimit) {
+      v.vx = (v.vx / currentSpeed) * speedLimit;
+      v.vy = (v.vy / currentSpeed) * speedLimit;
+    }
+    
+    if (v.x < -100) v.x = width + 100;
+    if (v.x > width + 100) v.x = -100;
+    if (v.y < -100) v.y = height + 100;
+    if (v.y > height + 100) v.y = -100;
+  }
+}
+
+function drawVectors(width, height, dataArray) {
+  if (vectors.length === 0) return;
+  
+  let energy = 0;
+  let bass = 0;
+  if (dataArray) {
+    const len = dataArray.length;
+    for (let i = 0; i < Math.min(8, len); i++) bass += dataArray[i] / 255;
+    for (let i = 0; i < len; i++) energy += dataArray[i] / 255;
+    bass /= Math.min(8, len);
+    energy /= len;
+  }
+  
+  const now = performance.now() / 1000;
+  
+  ctx.globalCompositeOperation = "screen";
+  
+  for (const v of vectors) {
+    const thickness = 1 + Math.pow(energy, 1.5) * 6 + bass * 10;
+    const speed = Math.sqrt(v.vx * v.vx + v.vy * v.vy) * 0.2;
+    const hue = (v.hue + now * speed * 2 + bass * 60) % 360;
+    const alpha = 0.3 + energy * 0.5;
+    
+    const angle = Math.atan2(v.vy, v.vx);
+    const ex = Math.cos(angle) * v.len;
+    const ey = Math.sin(angle) * v.len;
+    
+    ctx.beginPath();
+    ctx.moveTo(v.x, v.y);
+    ctx.lineTo(v.x + ex, v.y + ey);
+    
+    ctx.strokeStyle = `hsla(${hue}, 80%, 65%, ${alpha})`;
+    ctx.lineWidth = thickness;
+    ctx.stroke();
+    
+    ctx.beginPath();
+    ctx.arc(v.x, v.y, thickness * 0.6, 0, Math.PI * 2);
+    ctx.fillStyle = `hsla(${hue}, 90%, 70%, ${alpha * 0.8})`;
+    ctx.fill();
+  }
+  
+  ctx.globalCompositeOperation = "source-over";
+}
+
 function setRenderMode(mode) {
    currentRenderMode = mode;
    particles.length = 0;
    fireParticles.length = 0;
-   peakHoldValues.length = 0;
-   gridPeakHoldValues.length = 0;
-   waterfallHistory = [];
-   terrainHistory = [];
-   bpmPeakHistory = [];
-   bpmEstimate = 120;
-   metaballs.length = 0;
-   ribbons.length = 0;
- }
+peakHoldValues.length = 0;
+    gridPeakHoldValues.length = 0;
+    waterfallHistory = [];
+    terrainHistory = [];
+    bpmPeakHistory = [];
+    bpmEstimate = 120;
+    metaballs.length = 0;
+    ribbons.length = 0;
+    vectors.length = 0;
+  }
 
 function drawEqualizer() {
   const { dpr, width, height } = getCanvasSize();
@@ -1223,6 +1323,10 @@ case "terrain":
     case "ribbons":
        updateRibbons(width, height, frequencyData, timeDomainData);
        drawRibbons(width, height, frequencyData);
+       break;
+    case "vectors":
+       updateVectors(width, height, frequencyData);
+       drawVectors(width, height, frequencyData);
        break;
     case "particles":
       updateParticles(width, height);
