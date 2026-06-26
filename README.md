@@ -14,7 +14,7 @@ A minimal, self-contained web application built with vanilla HTML, CSS, and Java
 - **Digital Clock** — 12-hour format with AM/PM, smooth dynamic resizing via JS `ResizeObserver`. Bounded between 48px and 400px. Formula: `clamp(48px, measured-to-fit, 400px)`. Never overflows viewport width; respects left/right margins (`5vw` each side).
 - **AM/PM Indicator** — sits as an inline superscript at the top-right of the clock digits, sized comparably to the date text.
 - **Date Display** — localized, full-length date string updated every minute.
-- **Graphic Equalizer** — 17 selectable real-time visualization modes rendered on `<canvas>` below the clock.
+- **Graphic Equalizer** — 21 selectable real-time visualization modes rendered on `<canvas>` below the clock.
 
 ### Audio Sources (Statusbar — Bottom Panel)
 The statusbar contains all playback controls and supports three audio source modes:
@@ -65,7 +65,11 @@ All modes use the same `AnalyserNode` data source. The rendering function switch
 | Mode | Description |
 |---|---|
 | `waterfall` | Scrolling 2D heatmap (spectrogram) where each new frequency frame is appended at the bottom and older rows scroll upward. |
-| `terrain` | Stacked line plots with perspective-like fading — each row represents a time slice, creating a 3D wireframe landscape effect. |
+| `terrain` | Moon-like rolling terrain with 16 stacked lines creating a 3D landscape. Features heartbeat-style peaks, random spikes, and crevice lines that pulse to the music's bass and energy. |
+| `metaballs` | Liquid-like blobs that merge and stretch to the beat. 6 glowing circles interact via screen blending, expanding on bass hits and creating organic flowing shapes. |
+| `ribbons` | Elegant curved trajectories that trail across the canvas. Multiple colored ribbons flow based on audio energy, with thickness and hue shifting in real-time. Their paths bend and stretch with the music. |
+| `vectors` | Dynamic line art with 80 colored segments shooting across the screen. Each line's stroke width, color (hue), and speed respond to frequency data — thicker, brighter lines during high energy. |
+| `nebula` | Deep space scene with twinkling stars and colorful nebula clouds. Stars pulse and drift based on audio energy, while nebula layers swirl with bass movement. Creates a cosmic, dreamy atmosphere. |
 | `particles` | Particle emitter system driven by aggregate audio energy. Particles spawn from the bottom with velocity and hue influenced by frequency intensity. |
 | `fire` | Fire particle emitter rising from the bottom of the canvas. Spawn rate and upward velocity are driven by audio energy, with colors ranging from yellow-white at the base through orange to red at the fading tips. Uses additive blending for a glowing effect. |
 
@@ -78,7 +82,7 @@ All modes include animated fallback motion when no real analyser data is availab
 | File | Purpose |
 |---|---|
 | `index.html` | Single-page markup, all CSS styles, and DOM structure. |
-| `script.js` | Clock logic, ResizeObserver sizing, `<audio>` playback, `getDisplayMedia` capture, Web Audio graph (`AudioContext`, `AnalyserNode`, `MediaElementSource`, `MediaStreamSource`), 17 rendering functions, and statusbar toggling. |
+| `script.js` | Clock logic, ResizeObserver sizing, `<audio>` playback, `getDisplayMedia` capture, Web Audio graph (`AudioContext`, `AnalyserNode`, `MediaElementSource`, `MediaStreamSource`), 21 rendering functions, and statusbar toggling. |
 | `README.md` | This document. |
 | `.gitignore` | Ignores `node_modules`, `.env`, and other standard artifacts. |
 
@@ -148,7 +152,7 @@ This ensures the clock:
 ### Equalizer Canvas
 - The canvas is sized to `width: 100%` of `.timeoneliner`, so it always matches the clock's horizontal span.
 - `devicePixelRatio` is accounted for to avoid blurriness on HiDPI/Retina displays.
-- All 17 modes share a single `requestAnimationFrame` loop; switching modes resets transient state (particle arrays, peak-hold values, waterfall history) to avoid stale visuals.
+- All 21 modes share a single `requestAnimationFrame` loop; switching modes resets transient state (particle arrays, peak-hold values, waterfall history) to avoid stale visuals.
 
 ---
 
