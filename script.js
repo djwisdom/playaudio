@@ -1012,6 +1012,128 @@ function drawMetaballs(width, height, dataArray) {
   ctx.globalCompositeOperation = "source-over";
 }
 
+let ribbons = [];
+const RIBBON_COUNT = 3;
+const RIBBON_POINTS = 60;
+const RIBBON_MAX_HISTORY = 200;
+
+function updateRibbons(width, height, dataArray, timeDomainData) {
+  if (!analyser) return;
+  
+  let energy = 0;
+  let bass = 0;
+  let mid = 0;
+  let high = 0;
+  
+  if (dataArray) {
+    const len = dataArray.length;
+    for (let i = 0; i < Math.min(8, len); i++) bass += dataArray[i] / 255;
+    for (let i = 8; i < Math.min(30, len); i++) mid += dataArray[i] / 255;
+    for (let i = 30; i < len; i++) high += dataArray[i] / 255;
+    bass /= Math.min(8, len);
+    mid /= Math.max(1, Math.min(22, len));
+    high /= Math.max(1, len - 30);
+    for (let i = 0; i < len; i++) energy += dataArray[i] / 255;
+    energy = Math.pow(energy / len, 0.7);
+  }
+
+  while (ribbons.length < RIBBON_COUNT) {
+    ribbons.push({
+      points: [],
+      hue: 200 + Math.random() * 60,
+      thickness: 15 + Math.random() * 20,
+      phase: Math.random() * Math.PI * 2
+    });
+  }
+
+  for (const ribbon of ribbons) {
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const amplitude = height * 0.25 * (0.5 + bass * 1.5);
+    const freqScale = 0.5 + mid * 1.5;
+    const time = performance.now() / 1000;
+    
+    const x = width * 0.3 + Math.sin(time * 0.8 + ribbon.phase) * width * 0.4;
+    const y = centerY + Math.sin(time * 1.2 + ribbon.phase * 1.5 + bass * 2) * amplitude;
+    
+    ribbon.points.push({ x, y, energy, time });
+    
+    while (ribbon.points.length > RIBBON_MAX_HISTORY) {
+      ribbon.points.shift();
+    }
+  }
+}
+
+function drawRibbons(width, height, dataArray) {
+  if (ribbons.length === 0) return;
+  
+  ctx.globalCompositeOperation = "screen";
+  
+  for (const ribbon of ribbons) {
+    if (ribbon.points.length < 2) continue;
+    
+    ctx.beginPath();
+    
+    for (let i = 0; i < ribbon.points.length - 1; i++) {
+      const p0 = ribbon.points[i];
+      const p1 = ribbon.points[i + 1];
+      
+      const thickness = ribbon.thickness * (0.5 + p0.energy * 1.5);
+      
+      const dx = p1.x - p0.x;
+      const dy = p1.y - p0.y;
+      const len = Math.sqrt(dx * dx + dy * dy);
+      const nx = -dy / len;
+      const ny = dx / len;
+      
+      if (i === 0) {
+        ctx.moveTo(p0.x + nx * thickness, p0.y + ny * thickness);
+      }
+      
+      ctx.lineTo(p1.x + nx * thickness, p1.y + ny * thickness);
+    }
+    
+    for (let i = ribbon.points.length - 1; i >= 0; i--) {
+      const p0 = ribbon.points[i];
+      const p1 = ribbon.points[i + 1];
+      
+      const thickness = ribbon.thickness * (0.5 + p0.energy * 1.5);
+      
+      const dx = p0.x - (i > 0 ? ribbon.points[i - 1].x : ribbon.points[0].x);
+      const dy = p0.y - (i > 0 ? ribbon.points[i - 1].y : ribbon.points[0].y);
+      const len = Math.sqrt(dx * dx + dy * dy) || 1;
+      const nx = -dy / len;
+      const ny = dx / len;
+      
+      if (i === ribbon.points.length - 1) {
+        ctx.lineTo(p0.x - nx * thickness, p0.y - ny * thickness);
+      }
+      
+      if (i > 0 && i < ribbon.points.length - 1) {
+        const prev = ribbon.points[i - 1];
+        ctx.lineTo(prev.x - nx * thickness, prev.y - ny * thickness);
+      }
+    }
+    
+    ctx.closePath();
+    
+    const grad = ctx.createLinearGradient(0, 0, width, height);
+    const baseHue = ribbon.hue + Math.sin(performance.now() / 1000 * 0.5) * 20;
+    grad.addColorStop(0, `hsla(${baseHue}, 90%, 65%, 0.6)`);
+    grad.addColorStop(0.5, `hsla(${baseHue + 30}, 80%, 55%, 0.4)`);
+    grad.addColorStop(1, `hsla(${baseHue - 30}, 70%, 45%, 0.2)`);
+    
+    ctx.fillStyle = grad;
+    ctx.fill();
+    
+    ctx.strokeStyle = `hsla(${baseHue}, 80%, 70%, 0.8)`;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+  
+  ctx.globalCompositeOperation = "source-over";
+}
+
 function setRenderMode(mode) {
    currentRenderMode = mode;
    particles.length = 0;
@@ -1023,6 +1145,7 @@ function setRenderMode(mode) {
    bpmPeakHistory = [];
    bpmEstimate = 120;
    metaballs.length = 0;
+   ribbons.length = 0;
  }
 
 function drawEqualizer() {
@@ -1096,6 +1219,10 @@ case "terrain":
     case "metaballs":
        updateMetaballs(width, height, frequencyData);
        drawMetaballs(width, height, frequencyData);
+       break;
+    case "ribbons":
+       updateRibbons(width, height, frequencyData, timeDomainData);
+       drawRibbons(width, height, frequencyData);
        break;
     case "particles":
       updateParticles(width, height);
