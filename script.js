@@ -925,13 +925,15 @@ function drawEqualizerFire(width, height) {
 function updateMetaballs(width, height, dataArray) {
   const now = performance.now() / 1000;
   
+  const volume = document.getElementById("audioPlayer")?.volume ?? 1;
+  
   let energy = 0;
   let bass = 0;
   if (dataArray && dataArray.length > 0) {
     const bassBins = Math.min(10, dataArray.length);
-    for (let i = 0; i < bassBins; i++) bass += dataArray[i] / 255;
+    for (let i = 0; i < bassBins; i++) bass += (dataArray[i] / 255) * volume;
     bass = bass / bassBins;
-    for (let i = 0; i < dataArray.length; i++) energy += dataArray[i] / 255;
+    for (let i = 0; i < dataArray.length; i++) energy += (dataArray[i] / 255) * volume;
     energy = Math.pow(energy / dataArray.length, 0.7);
   }
 
@@ -965,9 +967,11 @@ function drawMetaballs(width, height, dataArray) {
   
   const field = new Float32Array(gridW * gridH);
   
+  const volume = document.getElementById("audioPlayer")?.volume ?? 1;
+  
   let energy = 0;
   if (dataArray) {
-    for (let i = 0; i < dataArray.length; i++) energy += dataArray[i];
+    for (let i = 0; i < dataArray.length; i++) energy += dataArray[i] * volume;
     energy = Math.pow(energy / dataArray.length / 255, 0.8);
   }
   const threshold = 0.25 + energy * 0.5;
@@ -995,6 +999,7 @@ function drawMetaballs(width, height, dataArray) {
     }
   }
 
+  ctx.globalAlpha = volume;
   ctx.globalCompositeOperation = "screen";
   const now = performance.now() / 1000;
   
@@ -1009,6 +1014,7 @@ function drawMetaballs(width, height, dataArray) {
       }
     }
   }
+  ctx.globalAlpha = 1;
   ctx.globalCompositeOperation = "source-over";
 }
 
@@ -1020,6 +1026,8 @@ const RIBBON_MAX_HISTORY = 200;
 function updateRibbons(width, height, dataArray, timeDomainData) {
   if (!analyser) return;
   
+  const volume = document.getElementById("audioPlayer")?.volume ?? 1;
+  
   let energy = 0;
   let bass = 0;
   let mid = 0;
@@ -1027,13 +1035,13 @@ function updateRibbons(width, height, dataArray, timeDomainData) {
   
   if (dataArray) {
     const len = dataArray.length;
-    for (let i = 0; i < Math.min(8, len); i++) bass += dataArray[i] / 255;
-    for (let i = 8; i < Math.min(30, len); i++) mid += dataArray[i] / 255;
-    for (let i = 30; i < len; i++) high += dataArray[i] / 255;
+    for (let i = 0; i < Math.min(8, len); i++) bass += (dataArray[i] / 255) * volume;
+    for (let i = 8; i < Math.min(30, len); i++) mid += (dataArray[i] / 255) * volume;
+    for (let i = 30; i < len; i++) high += (dataArray[i] / 255) * volume;
     bass /= Math.min(8, len);
     mid /= Math.max(1, Math.min(22, len));
     high /= Math.max(1, len - 30);
-    for (let i = 0; i < len; i++) energy += dataArray[i] / 255;
+    for (let i = 0; i < len; i++) energy += (dataArray[i] / 255) * volume;
     energy = Math.pow(energy / len, 0.7);
   }
 
@@ -1067,6 +1075,19 @@ function updateRibbons(width, height, dataArray, timeDomainData) {
 function drawRibbons(width, height, dataArray) {
   if (ribbons.length === 0) return;
   
+  const volume = document.getElementById("audioPlayer")?.volume ?? 1;
+  
+  let energy = 0;
+  let bass = 0;
+  if (dataArray) {
+    const len = dataArray.length;
+    for (let i = 0; i < Math.min(8, len); i++) bass += (dataArray[i] / 255) * volume;
+    for (let i = 0; i < len; i++) energy += (dataArray[i] / 255) * volume;
+    energy /= len;
+    bass /= Math.min(8, len);
+  }
+  
+  ctx.globalAlpha = volume;
   ctx.globalCompositeOperation = "screen";
   
   for (const ribbon of ribbons) {
@@ -1131,6 +1152,7 @@ function drawRibbons(width, height, dataArray) {
     ctx.stroke();
   }
   
+  ctx.globalAlpha = 1;
   ctx.globalCompositeOperation = "source-over";
 }
 
@@ -1140,12 +1162,14 @@ const VECTOR_SEGMENTS = 80;
 function updateVectors(width, height, dataArray) {
   const now = performance.now() / 1000;
   
+  const volume = document.getElementById("audioPlayer")?.volume ?? 1;
+  
   let energy = 0;
   let bass = 0;
-  if (dataArray) {
+  if (dataArray && dataArray.length > 0) {
     const len = dataArray.length;
-    for (let i = 0; i < Math.min(8, len); i++) bass += dataArray[i] / 255;
-    for (let i = 0; i < len; i++) energy += dataArray[i] / 255;
+    for (let i = 0; i < Math.min(8, len); i++) bass += (dataArray[i] / 255) * volume;
+    for (let i = 0; i < len; i++) energy += (dataArray[i] / 255) * volume;
     bass /= Math.min(8, len);
     energy /= len;
   }
@@ -1192,18 +1216,19 @@ function updateVectors(width, height, dataArray) {
 function drawVectors(width, height, dataArray) {
   if (vectors.length === 0) return;
   
+  const volume = document.getElementById("audioPlayer")?.volume ?? 1;
+  
   let energy = 0;
   let bass = 0;
   if (dataArray) {
     const len = dataArray.length;
-    for (let i = 0; i < Math.min(8, len); i++) bass += dataArray[i] / 255;
-    for (let i = 0; i < len; i++) energy += dataArray[i] / 255;
+    for (let i = 0; i < Math.min(8, len); i++) bass += (dataArray[i] / 255) * volume;
+    for (let i = 0; i < len; i++) energy += (dataArray[i] / 255) * volume;
     bass /= Math.min(8, len);
     energy /= len;
   }
   
-  const now = performance.now() / 1000;
-  
+  ctx.globalAlpha = volume;
   ctx.globalCompositeOperation = "screen";
   
   for (const v of vectors) {
@@ -1230,48 +1255,21 @@ function drawVectors(width, height, dataArray) {
     ctx.fill();
   }
   
+ctx.globalAlpha = 1;
   ctx.globalCompositeOperation = "source-over";
 }
 
-let stars = [];
-const STAR_COUNT = 150;
-const NEBULA_PARTICLES = 30;
-let nebula = [];
-
-function initStars(width, height) {
-  for (let i = 0; i < STAR_COUNT; i++) {
-    stars.push({
-      x: Math.random() * width,
-      y: Math.random() * height,
-      r: 0.3 + Math.random() * 0.8,
-      hue: 200 + Math.random() * 60,
-      alpha: 0.2 + Math.random() * 0.6,
-      twinkle: Math.random() * 0.5 + 0.5
-    });
-  }
-  
-  for (let i = 0; i < NEBULA_PARTICLES; i++) {
-    nebula.push({
-      x: Math.random() * width,
-      y: Math.random() * height,
-      size: 40 + Math.random() * 80,
-      hue: 220 + Math.random() * 80,
-      phase: Math.random() * Math.PI * 2
-    });
-  }
-}
-
-function updateNebula(width, height, dataArray) {
+function drawNebula(width, height, dataArray) {
   if (stars.length === 0 && analyser) initStars(width, height);
   
-  const now = performance.now() / 1000;
+  const volume = document.getElementById("audioPlayer")?.volume ?? 1;
   
   let energy = 0;
   let bass = 0;
   if (dataArray) {
     const len = dataArray.length;
-    for (let i = 0; i < Math.min(6, len); i++) bass += dataArray[i] / 255;
-    for (let i = 0; i < len; i++) energy += dataArray[i] / 255;
+    for (let i = 0; i < Math.min(6, len); i++) bass += (dataArray[i] / 255) * volume;
+    for (let i = 0; i < len; i++) energy += (dataArray[i] / 255) * volume;
     bass /= Math.min(6, len);
     energy /= len;
   }
@@ -1302,25 +1300,28 @@ function updateNebula(width, height, dataArray) {
 function drawNebula(width, height, dataArray) {
   if (stars.length === 0 && analyser) initStars(width, height);
   
+  const volume = document.getElementById("audioPlayer")?.volume ?? 1;
+  
   let energy = 0;
   let bass = 0;
   if (dataArray) {
     const len = dataArray.length;
-    for (let i = 0; i < Math.min(6, len); i++) bass += dataArray[i] / 255;
-    for (let i = 0; i < len; i++) energy += dataArray[i] / 255;
+    for (let i = 0; i < Math.min(6, len); i++) bass += (dataArray[i] / 255) * volume;
+    for (let i = 0; i < len; i++) energy += (dataArray[i] / 255) * volume;
     bass /= Math.min(6, len);
     energy /= len;
   }
   
   const now = performance.now() / 1000;
   
+  ctx.globalAlpha = volume;
   ctx.globalCompositeOperation = "lighter";
   
   for (const n of nebula) {
     const size = n.size * (0.8 + bass * 0.8 + Math.sin(n.phase) * 0.2);
     const grad = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, size);
-    grad.addColorStop(0, `hsla(${n.hue}, 80%, 70%, ${0.1 + bass * 0.3})`);
-    grad.addColorStop(0.5, `hsla(${(n.hue + 30) % 360}, 60%, 50%, ${0.08 + bass * 0.2})`);
+    grad.addColorStop(0, `hsla(${n.hue}, 80%, 70%, ${(0.1 + bass * 0.3) * volume})`);
+    grad.addColorStop(0.5, `hsla(${(n.hue + 30) % 360}, 60%, 50%, ${(0.08 + bass * 0.2) * volume})`);
     grad.addColorStop(1, `hsla(${(n.hue + 60) % 360}, 40%, 30%, 0)`);
     
     ctx.fillStyle = grad;
@@ -1332,10 +1333,11 @@ function drawNebula(width, height, dataArray) {
   for (const star of stars) {
     ctx.beginPath();
     ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2);
-    ctx.fillStyle = `hsla(${star.hue}, 70%, 80%, ${star.alpha})`;
+    ctx.fillStyle = `hsla(${star.hue}, 70%, 80%, ${star.alpha * volume})`;
     ctx.fill();
   }
   
+  ctx.globalAlpha = 1;
   ctx.globalCompositeOperation = "source-over";
 }
 
