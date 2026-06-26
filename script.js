@@ -588,21 +588,29 @@ function drawEqualizerTerrain(width, height, dataArray) {
    const now = performance.now() / 1000;
 
    while (terrainHistory.length >= rows) terrainHistory.shift();
+   
+   let bassBoost = 0;
+   if (dataArray && dataArray.length > 10) {
+     const bassBins = Math.min(12, dataArray.length);
+     for (let i = 0; i < bassBins; i++) bassBoost += dataArray[i] / 255;
+     bassBoost = (bassBoost / bassBins) * 0.3;
+   }
+
    const frame = [];
    for (let i = 0; i < cols; i++) {
      const idx = Math.floor(i / cols * usableBins);
      let v = dataArray[idx] / 255;
-     v = Math.max(0.05, v + 0.05 * Math.sin(now * 2 + i * 0.5));
-     const noise = 0.15 * Math.sin(now * 0.7 + i * 0.3) * Math.cos(now * 0.4 + i * 0.6);
-     const bump = 0.12 * Math.sin(now * 0.3 + i * 0.8) * Math.sin(now * 0.5 + i * 0.4);
-     v = Math.max(0.02, Math.min(0.98, v + noise + bump));
+     const chaos = 0.25 + 0.2 * Math.sin(now * 0.8 + i * 0.7) + 0.15 * Math.cos(now * 0.5 + i * 0.9);
+     const spike = Math.random() < 0.02 ? 0.4 + Math.random() * 0.3 : 0;
+     const dip = Math.random() < 0.015 ? -0.25 - Math.random() * 0.15 : 0;
+     v = Math.max(0.02, Math.min(0.98, v * 0.6 + chaos * 0.4 + bassBoost + spike + dip));
      frame.push(v);
    }
    terrainHistory.push(frame);
 
-   ctx.lineWidth = 1.2;
+   ctx.lineWidth = 1.5;
    for (let row = 0; row < terrainHistory.length; row++) {
-     const vScale = 1 - row / rows * 0.6;
+     const vScale = 0.9 - row / rows * 0.4;
      const yBase = height - (row + 1) * cellH;
      ctx.beginPath();
      for (let col = 0; col < terrainHistory[row].length; col++) {
@@ -611,21 +619,32 @@ function drawEqualizerTerrain(width, height, dataArray) {
        if (col === 0) ctx.moveTo(x, y);
        else ctx.lineTo(x, y);
      }
-     const hue = 220 - (row / rows) * 20;
-     const lightness = 30 + (row / rows) * 20;
-     ctx.strokeStyle = `hsla(${hue}, 30%, ${lightness}%, ${0.3 + (row / rows) * 0.7})`;
+     const hue = 210 + Math.sin(now * 0.3 + row * 0.1) * 15;
+     const lightness = 35 + Math.cos(now * 0.2 + row * 0.15) * 10;
+     ctx.strokeStyle = `hsla(${hue}, 40%, ${lightness}%, ${0.4 + (row / rows) * 0.6})`;
      ctx.stroke();
    }
 
+   if (Math.random() < 0.3) {
+     const splatterX = Math.floor(Math.random() * cols);
+     const splatterHeight = 0.3 + Math.random() * 0.4;
+     const splatterY = height - (Math.floor(Math.random() * rows) + 1) * cellH;
+     const splatterXPos = splatterX * cellW;
+     ctx.fillStyle = `hsla(${200 + Math.random() * 30}, 60%, 60%, 0.35)`;
+     ctx.beginPath();
+     ctx.ellipse(splatterXPos, splatterY, cellW * 1.5, splatterHeight * cellH, 0, 0, Math.PI * 2);
+     ctx.fill();
+   }
+
    ctx.lineWidth = 1;
-   ctx.strokeStyle = "rgba(100, 120, 150, 0.15)";
+   ctx.strokeStyle = "rgba(120, 140, 180, 0.2)";
    for (let row = 0; row < terrainHistory.length; row++) {
      const yCrevice = height - (row + 1) * cellH;
      ctx.beginPath();
      for (let col = 0; col < terrainHistory[row].length; col++) {
        const x = col * cellW;
-       const creviceDepth = 0.15 * Math.sin(now * 0.4 + col * 1.2) * Math.cos(now * 0.3 + col * 0.9);
-       const y = yCrevice + creviceDepth * cellH * 0.5;
+       const crevice = 0.25 * Math.sin(now * 0.4 + col * 1.5) * Math.cos(now * 0.3 + col * 1.1);
+       const y = yCrevice + crevice * cellH * 0.4;
        if (col === 0) ctx.moveTo(x, y);
        else ctx.lineTo(x, y);
      }
