@@ -1233,11 +1233,117 @@ function drawVectors(width, height, dataArray) {
   ctx.globalCompositeOperation = "source-over";
 }
 
+let stars = [];
+const STAR_COUNT = 150;
+const NEBULA_PARTICLES = 30;
+let nebula = [];
+
+function initStars(width, height) {
+  for (let i = 0; i < STAR_COUNT; i++) {
+    stars.push({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      r: 0.3 + Math.random() * 0.8,
+      hue: 200 + Math.random() * 60,
+      alpha: 0.2 + Math.random() * 0.6,
+      twinkle: Math.random() * 0.5 + 0.5
+    });
+  }
+  
+  for (let i = 0; i < NEBULA_PARTICLES; i++) {
+    nebula.push({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      size: 40 + Math.random() * 80,
+      hue: 220 + Math.random() * 80,
+      phase: Math.random() * Math.PI * 2
+    });
+  }
+}
+
+function updateNebula(width, height, dataArray) {
+  if (stars.length === 0 && analyser) initStars(width, height);
+  
+  const now = performance.now() / 1000;
+  
+  let energy = 0;
+  let bass = 0;
+  if (dataArray) {
+    const len = dataArray.length;
+    for (let i = 0; i < Math.min(6, len); i++) bass += dataArray[i] / 255;
+    for (let i = 0; i < len; i++) energy += dataArray[i] / 255;
+    bass /= Math.min(6, len);
+    energy /= len;
+  }
+  
+  for (const star of stars) {
+    star.x += (Math.random() - 0.5) * energy * 2;
+    star.y += (Math.random() - 0.5) * energy * 2;
+    star.alpha = 0.2 + star.twinkle * 0.3 + energy * 0.5 * Math.sin(now * 3 + star.x * 0.01);
+    
+    if (star.x < -10) star.x = width + 10;
+    if (star.x > width + 10) star.x = -10;
+    if (star.y < -10) star.y = height + 10;
+    if (star.y > height + 10) star.y = -10;
+  }
+  
+  for (const n of nebula) {
+    n.x += (Math.random() - 0.5) * bass * 30;
+    n.y += (Math.random() - 0.5) * bass * 30;
+    n.phase += 0.01 + energy * 0.02;
+    
+    if (n.x < -100) n.x = width + 100;
+    if (n.x > width + 100) n.x = -100;
+    if (n.y < -100) n.y = height + 100;
+    if (n.y > height + 100) n.y = -100;
+  }
+}
+
+function drawNebula(width, height, dataArray) {
+  if (stars.length === 0 && analyser) initStars(width, height);
+  
+  let energy = 0;
+  let bass = 0;
+  if (dataArray) {
+    const len = dataArray.length;
+    for (let i = 0; i < Math.min(6, len); i++) bass += dataArray[i] / 255;
+    for (let i = 0; i < len; i++) energy += dataArray[i] / 255;
+    bass /= Math.min(6, len);
+    energy /= len;
+  }
+  
+  const now = performance.now() / 1000;
+  
+  ctx.globalCompositeOperation = "lighter";
+  
+  for (const n of nebula) {
+    const size = n.size * (0.8 + bass * 0.8 + Math.sin(n.phase) * 0.2);
+    const grad = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, size);
+    grad.addColorStop(0, `hsla(${n.hue}, 80%, 70%, ${0.1 + bass * 0.3})`);
+    grad.addColorStop(0.5, `hsla(${(n.hue + 30) % 360}, 60%, 50%, ${0.08 + bass * 0.2})`);
+    grad.addColorStop(1, `hsla(${(n.hue + 60) % 360}, 40%, 30%, 0)`);
+    
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  for (const star of stars) {
+    ctx.beginPath();
+    ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2);
+    ctx.fillStyle = `hsla(${star.hue}, 70%, 80%, ${star.alpha})`;
+    ctx.fill();
+  }
+  
+  ctx.globalCompositeOperation = "source-over";
+}
+
 function setRenderMode(mode) {
-   currentRenderMode = mode;
-   particles.length = 0;
-   fireParticles.length = 0;
-peakHoldValues.length = 0;
+    currentRenderMode = mode;
+    particles.length = 0;
+    fireParticles.length = 0;
+ peakHoldValues.length = 0;
     gridPeakHoldValues.length = 0;
     waterfallHistory = [];
     terrainHistory = [];
@@ -1246,6 +1352,8 @@ peakHoldValues.length = 0;
     metaballs.length = 0;
     ribbons.length = 0;
     vectors.length = 0;
+    stars.length = 0;
+    nebula.length = 0;
   }
 
 function drawEqualizer() {
@@ -1327,6 +1435,10 @@ case "terrain":
     case "vectors":
        updateVectors(width, height, frequencyData);
        drawVectors(width, height, frequencyData);
+       break;
+    case "nebula":
+       updateNebula(width, height, frequencyData);
+       drawNebula(width, height, frequencyData);
        break;
     case "particles":
       updateParticles(width, height);
