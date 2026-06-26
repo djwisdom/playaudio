@@ -36,6 +36,8 @@ let waterfallHistory = [];
 let terrainHistory = [];
 let bpmPeakHistory = [];
 let bpmEstimate = 120;
+let metaballs = [];
+const METABALL_COUNT = 6;
 
 const clockEl = document.getElementById("clock");
 const timeoneliner = document.querySelector(".timeoneliner");
@@ -920,17 +922,108 @@ function drawEqualizerFire(width, height) {
   ctx.globalCompositeOperation = "source-over";
 }
 
-function setRenderMode(mode) {
-  currentRenderMode = mode;
-  particles.length = 0;
-  fireParticles.length = 0;
-  peakHoldValues.length = 0;
-  gridPeakHoldValues.length = 0;
-  waterfallHistory = [];
-  terrainHistory = [];
-  bpmPeakHistory = [];
-  bpmEstimate = 120;
+function updateMetaballs(width, height, dataArray) {
+  const now = performance.now() / 1000;
+  
+  let energy = 0;
+  let bass = 0;
+  if (dataArray && dataArray.length > 0) {
+    const bassBins = Math.min(10, dataArray.length);
+    for (let i = 0; i < bassBins; i++) bass += dataArray[i] / 255;
+    bass = bass / bassBins;
+    for (let i = 0; i < dataArray.length; i++) energy += dataArray[i] / 255;
+    energy = Math.pow(energy / dataArray.length, 0.7);
+  }
+
+  while (metaballs.length < METABALL_COUNT) {
+    metaballs.push({
+      x: Math.random() * width,
+      y: Math.random() * height * 0.6 + height * 0.2,
+      vx: (Math.random() - 0.5) * 0.5,
+      vy: (Math.random() - 0.5) * 0.3,
+      baseRadius: 20 + Math.random() * 30,
+      phase: Math.random() * Math.PI * 2
+    });
+  }
+
+  for (const b of metaballs) {
+    b.x += b.vx + (Math.random() - 0.5) * 0.3;
+    b.y += b.vy * (0.5 + bass * 2);
+    b.phase += 0.02;
+    
+    if (b.x < -50) b.x = width + 50;
+    if (b.x > width + 50) b.x = -50;
+    if (b.y < 0) b.y = height;
+    if (b.y > height) b.y = 0;
+  }
 }
+
+function drawMetaballs(width, height, dataArray) {
+  const gridSize = 2;
+  const gridW = Math.ceil(width / gridSize);
+  const gridH = Math.ceil(height / gridSize);
+  
+  const field = new Float32Array(gridW * gridH);
+  
+  let energy = 0;
+  if (dataArray) {
+    for (let i = 0; i < dataArray.length; i++) energy += dataArray[i];
+    energy = Math.pow(energy / dataArray.length / 255, 0.8);
+  }
+  const threshold = 0.25 + energy * 0.5;
+
+  for (const b of metaballs) {
+    const radius = b.baseRadius * (0.8 + energy * 0.8);
+    const r2 = radius * radius;
+    
+    const startX = Math.max(0, Math.floor((b.x - radius) / gridSize));
+    const endX = Math.min(gridW - 1, Math.floor((b.x + radius) / gridSize));
+    const startY = Math.max(0, Math.floor((b.y - radius) / gridSize));
+    const endY = Math.min(gridH - 1, Math.floor((b.y + radius) / gridSize));
+
+    for (let gy = startY; gy <= endY; gy++) {
+      for (let gx = startX; gx <= endX; gx++) {
+        const px = gx * gridSize - b.x;
+        const py = gy * gridSize - b.y;
+        const dist2 = px * px + py * py;
+        const idx = gy * gridW + gx;
+        if (dist2 < r2) {
+          const falloff = 1 - Math.sqrt(dist2) / radius;
+          field[idx] += falloff;
+        }
+      }
+    }
+  }
+
+  ctx.globalCompositeOperation = "screen";
+  const now = performance.now() / 1000;
+  
+  for (let gy = 0; gy < gridH; gy++) {
+    for (let gx = 0; gx < gridW; gx++) {
+      const idx = gy * gridW + gx;
+      if (field[idx] > threshold) {
+        const hue = 180 + Math.sin(now * 2 + (gy + gx) * 0.1) * 80;
+        const alpha = Math.min(0.8, field[idx] * 0.4);
+        ctx.fillStyle = `hsla(${hue}, 80%, 70%, ${alpha})`;
+        ctx.fillRect(gx * gridSize, gy * gridSize, gridSize, gridSize);
+      }
+    }
+  }
+  ctx.globalCompositeOperation = "source-over";
+}
+
+function setRenderMode(mode) {
+   currentRenderMode = mode;
+   particles.length = 0;
+   fireParticles.length = 0;
+   peakHoldValues.length = 0;
+   gridPeakHoldValues.length = 0;
+   waterfallHistory = [];
+   terrainHistory = [];
+   bpmPeakHistory = [];
+   bpmEstimate = 120;
+   metaballs.length = 0;
+ }
 
 function drawEqualizer() {
   const { dpr, width, height } = getCanvasSize();
@@ -997,9 +1090,13 @@ function drawEqualizer() {
     case "waterfall":
       drawEqualizerWaterfall(width, height, frequencyData);
       break;
-    case "terrain":
-      drawEqualizerTerrain(width, height, frequencyData);
-      break;
+case "terrain":
+       drawEqualizerTerrain(width, height, frequencyData);
+       break;
+    case "metaballs":
+       updateMetaballs(width, height, frequencyData);
+       drawMetaballs(width, height, frequencyData);
+       break;
     case "particles":
       updateParticles(width, height);
       drawEqualizerParticles(width, height);
