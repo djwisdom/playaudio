@@ -589,62 +589,55 @@ function drawEqualizerTerrain(width, height, dataArray) {
 
    while (terrainHistory.length >= rows) terrainHistory.shift();
    
-   let bassBoost = 0;
-   if (dataArray && dataArray.length > 10) {
-     const bassBins = Math.min(12, dataArray.length);
-     for (let i = 0; i < bassBins; i++) bassBoost += dataArray[i] / 255;
-     bassBoost = (bassBoost / bassBins) * 0.3;
+   let energy = 0;
+   if (dataArray && dataArray.length > 0) {
+     const bassBins = Math.min(15, dataArray.length);
+     for (let i = 0; i < bassBins; i++) energy += dataArray[i] / 255;
+     energy = (energy / bassBins);
    }
 
    const frame = [];
    for (let i = 0; i < cols; i++) {
      const idx = Math.floor(i / cols * usableBins);
-     let v = dataArray[idx] / 255;
-     const chaos = 0.25 + 0.2 * Math.sin(now * 0.8 + i * 0.7) + 0.15 * Math.cos(now * 0.5 + i * 0.9);
-     const spike = Math.random() < 0.02 ? 0.4 + Math.random() * 0.3 : 0;
-     const dip = Math.random() < 0.015 ? -0.25 - Math.random() * 0.15 : 0;
-     v = Math.max(0.02, Math.min(0.98, v * 0.6 + chaos * 0.4 + bassBoost + spike + dip));
+     const freq = dataArray[idx] / 255;
+     const t = i / cols;
+     const heartbeatPulse = 0.6 * Math.abs(Math.sin(now * 8 + t * Math.PI * 4));
+     const energySpike = Math.pow(freq, 1.5) * 0.8;
+     const randomPeak = Math.random() < 0.03 ? 0.7 + Math.random() * 0.25 : 0;
+     const randomValley = Math.random() < 0.02 ? -0.4 - Math.random() * 0.3 : 0;
+     
+     let v = energy * 0.4 + heartbeatPulse * 0.35 + energySpike * 0.25 + randomPeak + randomValley;
+     v = Math.max(0.05, Math.min(0.95, v));
      frame.push(v);
    }
    terrainHistory.push(frame);
 
-   ctx.lineWidth = 1.5;
+   ctx.lineWidth = 2;
    for (let row = 0; row < terrainHistory.length; row++) {
-     const vScale = 0.9 - row / rows * 0.4;
+     const vScale = 1.2 - row / rows * 0.3;
      const yBase = height - (row + 1) * cellH;
      ctx.beginPath();
      for (let col = 0; col < terrainHistory[row].length; col++) {
        const x = col * cellW;
-       const y = yBase - terrainHistory[row][col] * cellH * vScale;
+       const y = yBase - Math.pow(terrainHistory[row][col], 1.8) * cellH * vScale;
        if (col === 0) ctx.moveTo(x, y);
        else ctx.lineTo(x, y);
      }
-     const hue = 210 + Math.sin(now * 0.3 + row * 0.1) * 15;
-     const lightness = 35 + Math.cos(now * 0.2 + row * 0.15) * 10;
-     ctx.strokeStyle = `hsla(${hue}, 40%, ${lightness}%, ${0.4 + (row / rows) * 0.6})`;
+     const hue = 180 + Math.sin(now * 2 + row * 0.2) * 40;
+     const lightness = 40 + Math.cos(now * 1.5 + row * 0.3) * 20;
+     ctx.strokeStyle = `hsla(${hue}, 80%, ${lightness}%, ${0.6 + (row / rows) * 0.4})`;
      ctx.stroke();
    }
 
-   if (Math.random() < 0.3) {
-     const splatterX = Math.floor(Math.random() * cols);
-     const splatterHeight = 0.3 + Math.random() * 0.4;
-     const splatterY = height - (Math.floor(Math.random() * rows) + 1) * cellH;
-     const splatterXPos = splatterX * cellW;
-     ctx.fillStyle = `hsla(${200 + Math.random() * 30}, 60%, 60%, 0.35)`;
-     ctx.beginPath();
-     ctx.ellipse(splatterXPos, splatterY, cellW * 1.5, splatterHeight * cellH, 0, 0, Math.PI * 2);
-     ctx.fill();
-   }
-
    ctx.lineWidth = 1;
-   ctx.strokeStyle = "rgba(120, 140, 180, 0.2)";
+   ctx.strokeStyle = "rgba(200, 220, 255, 0.25)";
    for (let row = 0; row < terrainHistory.length; row++) {
-     const yCrevice = height - (row + 1) * cellH;
+     const yCrevice = height - (row + 1) * cellH + cellH * 0.3;
      ctx.beginPath();
      for (let col = 0; col < terrainHistory[row].length; col++) {
        const x = col * cellW;
-       const crevice = 0.25 * Math.sin(now * 0.4 + col * 1.5) * Math.cos(now * 0.3 + col * 1.1);
-       const y = yCrevice + crevice * cellH * 0.4;
+       const crevice = 0.35 * Math.sin(now * 6 + col * 1.5) * Math.cos(now * 4 + col * 1.1);
+       const y = yCrevice + crevice * cellH * 0.3;
        if (col === 0) ctx.moveTo(x, y);
        else ctx.lineTo(x, y);
      }
