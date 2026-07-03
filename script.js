@@ -467,6 +467,33 @@ function drawEqualizerMirrorBars(width, height, dataArray) {
   ctx.restore();
 }
 
+function drawEqualizerMirrorLines(width, height, dataArray) {
+  const usableBins = dataArray ? Math.floor(dataArray.length * 0.7) : 0;
+  const barCount = Math.max(1, Math.floor(width / 4));
+  const gap = 2;
+  const barWidth = 2;
+  const midY = height / 2;
+  const now = performance.now() / 1000;
+
+  for (let i = 0; i < barCount; i++) {
+    let value = 0.12 + 0.18 * Math.sin(now * 2.8 + i * 0.45) + 0.1 * Math.sin(now * 6.3 + i * 0.7);
+    if (dataArray) {
+      const dataIndex = Math.floor(i / barCount * usableBins);
+      const raw = dataArray[dataIndex] / 255;
+      value = Math.max(raw, value);
+    }
+    value = Math.max(0.05, Math.min(1, value));
+    const barH = Math.max(2, value * midY * 0.9);
+    const x = i * 4;
+    const hue = 200 + value * 60;
+
+    ctx.fillStyle = `hsla(${hue}, 75%, 55%, 0.9)`;
+    ctx.fillRect(x, midY - barH, barWidth, barH);
+    ctx.fillStyle = `hsla(${hue + 20}, 65%, 40%, 0.7)`;
+    ctx.fillRect(x, midY, barWidth, barH);
+  }
+}
+
 function drawEqualizerPeakBars(width, height, dataArray) {
   const usableBins = dataArray ? Math.floor(dataArray.length * 0.7) : 0;
   const barCount = Math.max(1, Math.floor(width / 14));
@@ -1433,6 +1460,9 @@ function drawEqualizer() {
       break;
     case "mirrorBars":
       drawEqualizerMirrorBars(width, height, frequencyData);
+      break;
+    case "mirrorLines":
+      drawEqualizerMirrorLines(width, height, frequencyData);
       break;
     case "peakBars":
       drawEqualizerPeakBars(width, height, frequencyData);
