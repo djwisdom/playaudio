@@ -511,7 +511,7 @@ function drawEqualizerMirrorLines(width, height, dataArray) {
 
 function drawEqualizerTripleBars(width, height, dataArray) {
   const usableBins = dataArray ? Math.floor(dataArray.length * 0.7) : 0;
-  const barWidth = 3;
+  const barWidth = 9;
   const groupSize = 3;
   const gapBars = 2;
   const groupWidth = groupSize * barWidth;
