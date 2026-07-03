@@ -469,7 +469,9 @@ function drawEqualizerMirrorBars(width, height, dataArray) {
 
 function drawEqualizerMirrorLines(width, height, dataArray) {
   const usableBins = dataArray ? Math.floor(dataArray.length * 0.7) : 0;
-  const barCount = Math.max(1, Math.floor(width / 4));
+  const barWidth = 2;
+  const gap = barWidth * 3;
+  const barCount = Math.max(1, Math.floor(width / (barWidth + gap)));
   const midY = height / 2;
   const now = performance.now() / 1000;
 
@@ -499,11 +501,11 @@ function drawEqualizerMirrorLines(width, height, dataArray) {
     }
     value = Math.max(0.05, Math.min(1, value));
     const barH = Math.max(2, value * midY * 0.9);
-    const x = i * 4;
+    const x = i * (barWidth + gap);
 
     ctx.fillStyle = `hsla(${baseHue}, 75%, 55%, 0.9)`;
-    ctx.fillRect(x, midY - barH, 2, barH);
-    ctx.fillRect(x, midY, 2, barH);
+    ctx.fillRect(x, midY - barH, barWidth, barH);
+    ctx.fillRect(x, midY, barWidth, barH);
   }
 }
 
