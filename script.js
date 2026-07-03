@@ -509,6 +509,59 @@ function drawEqualizerMirrorLines(width, height, dataArray) {
   }
 }
 
+function drawEqualizerTripleBars(width, height, dataArray) {
+  const usableBins = dataArray ? Math.floor(dataArray.length * 0.7) : 0;
+  const barWidth = 3;
+  const groupSize = 3;
+  const gapBars = 2;
+  const groupWidth = groupSize * barWidth;
+  const gapWidth = gapBars * barWidth;
+  const stride = groupWidth + gapWidth;
+  const groupCount = Math.max(1, Math.floor(width / stride));
+  const now = performance.now() / 1000;
+
+  const palette = [0, 30, 60, 120, 200, 240, 270, 300, 360];
+  const holdSeconds = 5;
+  const fadeSeconds = 4;
+  const step = holdSeconds + fadeSeconds;
+  const totalCycle = palette.length * step;
+  const phase = (now * 1.0) % totalCycle;
+  const idx = Math.floor(phase / step) % palette.length;
+  const localT = phase - idx * step;
+  const nextIdx = (idx + 1) % palette.length;
+  let baseHue;
+  if (localT < holdSeconds) {
+    baseHue = palette[idx];
+  } else {
+    const t = (localT - holdSeconds) / fadeSeconds;
+    baseHue = palette[idx] + (palette[nextIdx] - palette[idx]) * t;
+  }
+
+  for (let g = 0; g < groupCount; g++) {
+    let value = 0.12 + 0.18 * Math.sin(now * 2.8 + g * 0.45) + 0.1 * Math.sin(now * 6.3 + g * 0.7);
+    if (dataArray) {
+      const dataIndex = Math.floor(g / groupCount * usableBins);
+      const raw = dataArray[dataIndex] / 255;
+      value = Math.max(raw, value);
+    }
+    value = Math.max(0.05, Math.min(1, value));
+    const barH = Math.max(3, value * height * 0.9);
+    const startX = g * stride;
+    const y = height - barH;
+
+    const grad = ctx.createLinearGradient(0, y, 0, height);
+    grad.addColorStop(0, `hsla(${baseHue}, 100%, 75%, 1)`);
+    grad.addColorStop(0.5, `hsla(${baseHue}, 85%, 55%, 0.9)`);
+    grad.addColorStop(1, `hsla(${baseHue}, 70%, 30%, 0.6)`);
+    ctx.fillStyle = grad;
+
+    for (let j = 0; j < groupSize; j++) {
+      const x = startX + j * barWidth;
+      ctx.fillRect(x, y, barWidth, barH);
+    }
+  }
+}
+
 function drawEqualizerPeakBars(width, height, dataArray) {
   const usableBins = dataArray ? Math.floor(dataArray.length * 0.7) : 0;
   const barCount = Math.max(1, Math.floor(width / 14));
@@ -1478,6 +1531,9 @@ function drawEqualizer() {
       break;
     case "mirrorLines":
       drawEqualizerMirrorLines(width, height, frequencyData);
+      break;
+    case "tripleBars":
+      drawEqualizerTripleBars(width, height, frequencyData);
       break;
     case "peakBars":
       drawEqualizerPeakBars(width, height, frequencyData);
