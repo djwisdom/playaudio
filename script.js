@@ -513,7 +513,7 @@ function drawEqualizerTripleBars(width, height, dataArray) {
   const usableBins = dataArray ? Math.floor(dataArray.length * 0.7) : 0;
   const barWidth = 27;
   const groupSize = 3;
-  const gapBars = 2;
+  const gapBars = 1;
   const groupWidth = groupSize * barWidth;
   const gapWidth = gapBars * barWidth;
   const stride = groupWidth + gapWidth;
