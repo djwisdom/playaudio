@@ -518,6 +518,7 @@ function drawEqualizerTripleBars(width, height, dataArray) {
   const gapWidth = gapBars * barWidth;
   const stride = groupWidth + gapWidth;
   const groupCount = Math.max(1, Math.floor(width / stride));
+  const totalBars = groupCount * groupSize;
   const now = performance.now() / 1000;
 
   const palette = [0, 30, 60, 120, 200, 240, 270, 300, 360];
@@ -538,25 +539,27 @@ function drawEqualizerTripleBars(width, height, dataArray) {
   }
 
   for (let g = 0; g < groupCount; g++) {
-    let value = 0.12 + 0.18 * Math.sin(now * 2.8 + g * 0.45) + 0.1 * Math.sin(now * 6.3 + g * 0.7);
-    if (dataArray) {
-      const dataIndex = Math.floor(g / groupCount * usableBins);
-      const raw = dataArray[dataIndex] / 255;
-      value = Math.max(raw, value);
-    }
-    value = Math.max(0.05, Math.min(1, value));
-    const barH = Math.max(3, value * height * 0.9);
-    const startX = g * stride;
-    const y = height - barH;
-
-    const grad = ctx.createLinearGradient(0, y, 0, height);
-    grad.addColorStop(0, `hsla(${baseHue}, 100%, 75%, 1)`);
-    grad.addColorStop(0.5, `hsla(${baseHue}, 85%, 55%, 0.9)`);
-    grad.addColorStop(1, `hsla(${baseHue}, 70%, 30%, 0.6)`);
-    ctx.fillStyle = grad;
+    const groupStartX = g * stride;
 
     for (let j = 0; j < groupSize; j++) {
-      const x = startX + j * barWidth;
+      const barIndex = g * groupSize + j;
+      let value = 0.12 + 0.18 * Math.sin(now * 2.8 + barIndex * 0.45) + 0.1 * Math.sin(now * 6.3 + barIndex * 0.7);
+      if (dataArray) {
+        const dataIndex = Math.floor(barIndex / totalBars * usableBins);
+        const raw = dataArray[dataIndex] / 255;
+        value = Math.max(raw, value);
+      }
+      value = Math.max(0.05, Math.min(1, value));
+      const barH = Math.max(3, value * height * 0.9);
+      const x = groupStartX + j * barWidth;
+      const y = height - barH;
+
+      const grad = ctx.createLinearGradient(0, y, 0, height);
+      grad.addColorStop(0, `hsla(${baseHue}, 100%, 75%, 1)`);
+      grad.addColorStop(0.5, `hsla(${baseHue}, 85%, 55%, 0.9)`);
+      grad.addColorStop(1, `hsla(${baseHue}, 70%, 30%, 0.6)`);
+      ctx.fillStyle = grad;
+
       ctx.fillRect(x, y, barWidth, barH);
     }
   }
